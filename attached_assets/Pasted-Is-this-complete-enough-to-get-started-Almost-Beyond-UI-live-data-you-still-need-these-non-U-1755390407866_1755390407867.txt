@@ -1,0 +1,54 @@
+Is this complete enough to get started?
+
+Almost. Beyond “UI + live data,” you still need these non-UI items before paper-trading:
+
+Acceptance harness on autopilot
+Rolling 365d→30d with embargo, costs on, and a per-slice PASS/FAIL artifact saved to DB.
+
+Ablations (prove each module earns its keep)
+One command that toggles {ORCSMC→logistic, signature→bars, stopping→fixed hold, impact→instant x*, BEMA+high-LR→vanilla} and prints delta-Sharpe/MaxDD.
+
+Impact calibration job
+Fit ε (bp per unit) from your slippage log weekly; persist impact_eps_bp and last_calib_date.
+
+Risk rails enforced at execution
+Daily loss cap + per-trade stop, funding-top-5% halving, vol-drift +30% halving—and all decisions logged.
+
+Weights & versions
+Train/import bias & stopping; store bias_version, stopping_version with every decision. Revert cleanly if a new model fails acceptance.
+
+Paper-trade connector (testnet)
+Marketable limits, idempotent IDs, retries/backoff, clock-skew check, kill-switch.
+
+Monitoring
+Data staleness < 26h, missing field alarms, acceptance fail, guard triggers. Simple console logs are fine to start.
+
+Reproducibility
+Seed control, run manifests (data span, config hash), and a one-click “replay last decision.”
+
+If you’ve got those, yes—you can start paper-trading.
+
+Is the current UI on-strategy?
+
+Broadly yes, with a few tweaks:
+
+Gate (ORCSMC): Good (shows % and ESS).
+➕ Add: threshold 0.60 label and inertia ON badge (two-day rule) when applicable.
+
+Bias: Gauge/value OK.
+➕ Add: top-3 feature chips and training meta (BEMA α, LR: high).
+
+Sizing/Execution: You show κ and impact—great.
+➕ Add: planned step and “last calibrated: Xd”.
+
+Stopping: You show HOLD and bounds—great.
+✅ Ensure day/max (e.g., 2/7) is always visible.
+
+Signature/JAL/LR/BEMA panels: Nice diagnostics.
+🔹 JAL is optional; show it only when flag enabled.
+
+Validation: I don’t see the four acceptance ticks (Hit, Sharpe, MaxDD, Gate-off) + slice/costs/embargo footer.
+➕ Add that card back—this is your “go/no-go.”
+
+Theme: You asked for ultra-dark monochrome. The new screenshot has teal/green accents.
+➕ If you want to stick to spec, convert those accents to grayscale/opacity.

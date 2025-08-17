@@ -1,0 +1,329 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Ultra-dark monochrome theme with thin fonts */
+:root {
+  --bg-0: #0A0A0B;
+  --bg-1: #0E0E10;
+  --bg-2: #151517;
+  --bg-3: #1B1B1E;
+  --ink-1: #2A2A2F;
+  --ink-2: #3A3A42;
+  --ink-3: #4A4A55;
+  --txt-1: #D7D7DC;
+  --txt-2: #A5A5AC;
+  --txt-3: #7A7A82;
+  --acc-1: #5A5A66;
+  --acc-2: #70707B;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 300;
+  background: var(--bg-0);
+  color: var(--txt-1);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Thin font weights throughout */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 200;
+  letter-spacing: -0.02em;
+}
+
+/* Large numeric displays */
+.numeric-display {
+  font-weight: 100;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+}
+
+/* Cards and panels */
+.card {
+  background: var(--bg-1);
+  border: 1px solid var(--ink-1);
+  border-radius: 8px;
+  padding: 20px;
+  transition: all 0.2s ease;
+}
+
+.card:hover {
+  background: var(--bg-2);
+  border-color: var(--ink-2);
+}
+
+/* Buttons */
+button {
+  font-weight: 400;
+  transition: all 0.2s ease;
+}
+
+button:hover {
+  transform: translateY(-1px);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+/* Status pills */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.pill-long {
+  background: rgba(90, 90, 102, 0.2);
+  color: var(--txt-2);
+  border: 1px solid var(--acc-1);
+}
+
+.pill-short {
+  background: rgba(58, 58, 66, 0.2);
+  color: var(--txt-2);
+  border: 1px solid var(--ink-2);
+}
+
+.pill-flat {
+  background: transparent;
+  color: var(--txt-3);
+  border: 1px solid var(--ink-1);
+}
+
+/* Gauge styles */
+.gauge-container {
+  position: relative;
+}
+
+.gauge-track {
+  stroke: var(--ink-1);
+  fill: none;
+}
+
+.gauge-fill {
+  stroke: var(--acc-1);
+  fill: none;
+  transition: stroke-dashoffset 0.3s ease;
+}
+
+/* Table styles */
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+th {
+  text-align: left;
+  font-weight: 400;
+  color: var(--txt-3);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--ink-1);
+}
+
+td {
+  padding: 12px;
+  font-weight: 300;
+  color: var(--txt-2);
+  border-bottom: 1px solid rgba(42, 42, 47, 0.3);
+}
+
+/* Sparkline */
+.sparkline {
+  stroke: var(--acc-1);
+  fill: none;
+  stroke-width: 1;
+  opacity: 0.8;
+}
+
+.sparkline-area {
+  fill: var(--acc-1);
+  opacity: 0.1;
+}
+
+/* Badge styles */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.badge-warning {
+  background: rgba(112, 112, 123, 0.1);
+  color: var(--acc-2);
+  border: 1px solid var(--acc-2);
+}
+
+.badge-danger {
+  background: rgba(58, 58, 66, 0.2);
+  color: var(--txt-2);
+  border: 1px solid var(--ink-3);
+}
+
+/* Loading states */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-2) 25%,
+    var(--bg-3) 50%,
+    var(--bg-2) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* Scrollbar styles */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-1);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--ink-2);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ink-3);
+}
+
+/* Focus styles */
+:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--acc-1);
+}
+
+/* Utility classes */
+.text-mono {
+  font-variant-numeric: tabular-nums;
+}
+
+.text-dim {
+  color: var(--txt-3);
+}
+
+.text-faint {
+  color: var(--txt-2);
+}
+
+.border-subtle {
+  border-color: var(--ink-1);
+}
+
+/* Card components */
+.card-title {
+  color: var(--txt-2);
+  font-size: 14px;
+  font-weight: 400;
+  margin-bottom: 16px;
+}
+
+.big-number {
+  font-weight: 100;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  font-size: 48px;
+  color: var(--txt-1);
+}
+
+/* Chips */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 400;
+  background: var(--bg-2);
+  color: var(--txt-3);
+  border: 1px solid var(--ink-1);
+}
+
+/* Pill variants */
+.pill-warning {
+  background: rgba(112, 112, 123, 0.1);
+  color: var(--acc-2);
+  border: 1px solid var(--acc-2);
+}
+
+/* Spark text */
+.spark {
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+  font-size: 12px;
+  color: var(--txt-2);
+  letter-spacing: 0.5px;
+}
+
+/* Separator */
+.sep {
+  color: var(--ink-2);
+}
+
+/* Status dots */
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dot-fresh {
+  background: var(--acc-1);
+}
+
+.dot-stale {
+  background: var(--ink-3);
+}
+
+/* Validation ticks */
+.ticks {
+  list-style: none;
+}
+
+.ticks li {
+  color: var(--txt-3);
+}
+
+.ticks li.ok {
+  color: var(--txt-2);
+}
+
+.ticks li.no {
+  color: var(--txt-3);
+  opacity: 0.6;
+}

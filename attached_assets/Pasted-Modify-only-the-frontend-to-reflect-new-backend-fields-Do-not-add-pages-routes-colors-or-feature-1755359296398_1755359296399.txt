@@ -1,0 +1,90 @@
+Modify only the frontend to reflect new backend fields. Do not add pages, routes, colors, or features. Keep the single-screen, ultra-dark monochrome theme and thin fonts.
+
+What to do
+
+Consume new telemetry from GET /telemetry?symbol=BTC with this shape (treat all fields as optional; hide UI rows if missing):
+
+{
+  "meta": { "snapshot_utc":"2025-08-15T00:00:00Z", "staleness_pct":0.32,
+            "models":{"bias_version":"v3","stopping_version":"v2","sig_order":3,"sig_dims":24},
+            "inertia_active": true },
+  "gate": { "p_risk_on":0.72, "threshold":0.60, "ess":0.76,
+            "resample_spark":"▂▆▃▇▅▃▅", "twist_status":"learning", "inertia_active": true },
+  "bias": { "value":0.35, "top_attribs":[{"name":"sig_t×r"},{"name":"realvol_24h"},{"name":"ΔOI_24h"}],
+            "bema_alpha":0.10, "lr_regime":"high" },
+  "sizing": { "x_star":0.35, "current":0.20, "kappa":0.15, "planned_step":0.15,
+              "impact_eps_bp":1.8, "last_calib_days":6,
+              "guards":{"funding":false,"vol_drift":false} },
+  "stopping": { "decision":"HOLD", "bounds_low":0.02, "bounds_high":0.08, "confidence":0.85,
+                "age_days":3, "max_days":7 },
+  "validation": { "hit_rate":0.58, "sharpe":1.2, "max_dd":0.12, "gate_off":0.45, "pass":true,
+                  "slice_start":"2025-07-16", "slice_end":"2025-08-14",
+                  "costs_ok":true, "embargo_ok":true }
+}
+
+
+Update components (create if missing), all monochrome & thin:
+
+src/components/HeaderMeta.jsx: shows staleness dot + data @ {snapshot_utc}, bias vX, stopping vY, sig k={order} d≈{dims}, and inertia: ON if active.
+
+src/components/GateCard.jsx: big %; subrow: ESS, resamples (7d): {spark}, twist: {status}; footer: threshold ≥ {threshold} and “inertia rule applied” if active.
+
+src/components/BiasCard.jsx: gauge/value; top-3 feature chips; micro text BEMA α={alpha} · LR: {lr}.
+
+src/components/SizingCard.jsx: rows for target, current, κ; subrow: planned step, impact ε (bp), last calib {d}; optional guard pills (funding guard: HALF, vol-drift: CLEAR).
+
+src/components/StopsCard.jsx: pill HOLD/STOP; subrow: bounds [low, high] · conf · age {age}/{max}.
+
+src/components/ValidationCard.jsx: four ticks (Hit≥56, Sharpe≥1.0, MaxDD≤15, Gate Off≤60); micro footer: slice a→b · costs ✓/— · embargo ✓/— · overall PASS/FAIL.
+
+Wire data in src/App.jsx:
+
+On mount, fetch('/telemetry?symbol=BTC'), store {meta, gate, bias, sizing, stopping, validation} in state; pass as props.
+
+Null-safe rendering: if any field missing, auto-hide that line/chip/pill.
+
+Theme additions in src/theme.css (keep monochrome; no colors):
+
+Add utilities used by cards: .card, .card-title, .big-number, .text-dim, .text-faint, .chip, .pill, .spark, .sep, .dot, .ticks li, .ticks li.ok, .ticks li.no.
+
+Use existing CSS variables (ultra-dark palette) and set font weight ~300 by default; numeric displays ~200.
+
+Constraints
+
+No new pages/routes; keep the current layout and actions.
+
+No color beyond existing grayscale tokens; indicate status via opacity only.
+
+Do not modify backend; frontend must gracefully handle absent fields.
+
+Output format
+
+Provide unified diffs (patches) for the following files only:
+
+src/App.jsx
+
+src/components/HeaderMeta.jsx
+
+src/components/GateCard.jsx
+
+src/components/BiasCard.jsx
+
+src/components/SizingCard.jsx
+
+src/components/StopsCard.jsx
+
+src/components/ValidationCard.jsx
+
+src/theme.css
+
+After patches, print a smoke checklist I can run manually (what to click/see).
+
+Acceptance
+
+Page still renders as one screen, ultra-dark, thin fonts.
+
+If I call /telemetry with the sample JSON, the new rows/chips/pills appear exactly as specified.
+
+If fields are missing, the UI hides those lines without layout jumps.
+
+No new dependencies added.

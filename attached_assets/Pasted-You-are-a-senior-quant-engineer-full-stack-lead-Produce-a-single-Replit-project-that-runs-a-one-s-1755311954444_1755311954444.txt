@@ -1,0 +1,389 @@
+You are a senior quant engineer + full-stack lead. Produce a single Replit project that runs a one-screen trading dashboard (no extra pages/features) and the supporting backend. Keep everything minimal, deterministic, well-tested, and easy to run.
+
+Primary goals
+
+Implement the exact research stack below with simple, fast engineering.
+
+Deliver a sleek, modern, ultra-dark monochrome UI with thin fonts and immaculate spacing.
+
+Everything runs inside Replit (backend + UI). Training scripts that need GPU must be exported so the user can run them on their RTX 3080 locally and then re-import weights.
+
+Strategy (what to build)
+
+Research modules to implement (compact/productionized):
+
+Signature-Lite Volatility/Shape Features
+
+Time-augmented path signatures (order 2 and 3) over last 48–72h of 1h bars (price returns + volume). Compute a small set of coordinates (“shape moments”).
+
+Add daily close and simple realized vol features.
+
+Positioning & Options Inputs (optional)
+
+24h ΔFunding, 24h ΔOpen-Interest% as features.
+
+Optional features: Δ(25Δ risk-reversal), Δ(term slope 7D→30D) if provided.
+
+Regime Gate = ORCSMC
+
+Online Rolling Controlled SMC with two particle systems (one learns twist/control on a rolling window; one does filtering) to infer hidden state 
+𝑆
+𝑡
+∈
+𝑅
+𝐼
+𝑆
+𝐾
+−
+𝑂
+𝑁
+,
+𝑅
+𝐼
+𝑆
+𝐾
+−
+𝑂
+𝐹
+𝐹
+S
+t
+	​
+
+∈RISK−ON,RISK−OFF.
+
+Compute P(RISK-ON) each day at 00:00 UTC. Trade only if ≥ 0.60.
+
+HTF Bias Head
+
+A tiny transparent head (logistic or linear) on features → Bias ∈ [−1,+1].
+
+Training hygiene: BEMA (bias-corrected EMA) for stabilization; prefer higher learning rates during short fitting; optionally swap in JAL (AMSE + active loss) if labels are weak/noisy.
+
+Exit / Hold = Deep Optimal Stopping
+
+Daily decision at 00:00 UTC. Model outputs STOP(1)/HOLD(0). Enforce a hard cap: max holding 7 days.
+
+Sizing & Execution (Impact + Multiscale SV)
+
+Target exposure 
+𝑥
+∗
+∝
+Bias
+x
+∗
+∝Bias.
+
+Adjustment rate 
+𝜅
+κ slows in fast/rough/high vol and speeds in calm vol; assume small price impact and use multiscale-SV asymptotics to pick step size toward 
+𝑥
+∗
+x
+∗
+.
+
+Risk Rails
+
+Hard per-trade stop + max daily loss (account level).
+
+Funding guard: if funding cost in top 5% of 1-year dist for trade direction → halve size for that day.
+
+Vol drift guard: if realized vol since entry > +30% of sizing input → halve size.
+
+Validation (Walk-Forward)
+
+365d train / next 30d test; roll forward with embargo.
+
+Features only at decision time (00:00 UTC).
+
+Fees + realistic slippage (Binance-like), funding charged correctly.
+
+Accept only if per-30d slice (after costs):
+
+Hit-rate ≥ 56% on BTC/ETH (or ≥54% with payoff > 1.2× losers)
+
+Sharpe ≥ 1.0
+
+Max DD ≤ 15%
+
+Gate off-rate ≤ 60%
+
+Daily Runbook (00:00 UTC)
+
+Pull data → compute signature-lite + ΔFunding + ΔOI + (optional) options deltas.
+
+ORCSMC → P(RISK-ON); proceed only if ≥ 0.6.
+
+Bias head → LONG if Bias ≥ +0.2, SHORT if ≤ −0.2, else FLAT.
+
+Impact-aware step toward 
+𝑥
+∗
+x
+∗
+ using multiscale-SV rule.
+
+Next days: Deep Optimal Stopping → STOP/HOLD; always respect risk rails.
+
+What’s novel (please reflect in code comments)
+
+Model-agnostic signature features robust to rough/non-Markov vol.
+
+True online regime inference (bounded per-step compute).
+
+Principled execution sizing from small-impact + multiscale SV.
+
+Learned exits with bounds (not heuristics).
+
+Training stability defaults (BEMA, high-LR robustness; optional JAL).
+
+Deliverables (exactly these files)
+
+Create a single Replit repo with:
+
+/backend
+  app.py                     # FastAPI; serves dashboard API + daily run endpoints
+  data_io.py                 # Data adapters (CSV or exchange placeholder), 1h bars + daily close
+  features_signature.py      # Signature-lite computation (order 2/3), realized vol
+  features_positioning.py    # 24h ΔFunding, 24h ΔOI; optional options deltas
+  regime_orcsmc.py           # ORCSMC gate (dual-filter rolling window)
+  head_bias.py               # Tiny logistic/linear head; train/infer; BEMA; large-LR config; optional JAL
+  stopping.py                # Deep optimal stopping module (STOP/HOLD)
+  execution_sizing.py        # Target x*, impact-aware adjustment rate kappa (multiscale-SV shorthand)
+  risk.py                    # Hard stops, daily max loss, vol drift + funding guards
+  validate_walkforward.py    # Rolling 365/30 evaluation w/ embargo, fees/slippage/funding
+  scheduler.py               # 00:00 UTC job (APScheduler); also “Run now” endpoint
+  state_store.py             # SQLite for runs, positions, metrics; models/weights paths
+  config.py                  # Symbols, thresholds, windows, API keys envs
+  requirements.txt           # See dependencies section below
+  README.md                  # How to run; GPU training export/import steps
+  tests/
+    test_features.py
+    test_orcsmc.py
+    test_head_bias.py
+    test_stopping.py
+    test_execution.py
+    test_validation.py
+
+/frontend
+  index.html                 # Single-page app mount
+  src/main.jsx               # React + Tailwind entry
+  src/App.jsx                # One-screen dashboard (cards + charts)
+  src/components/*           # Card, Gauge, Sparkline, Table, Pill, Badge
+  src/theme.css              # Ultra-dark monochrome tokens + thin fonts
+  tailwind.config.js
+  package.json
+
+Backend details
+
+Language/stack: Python 3.11+, FastAPI, Uvicorn.
+
+Data IO: Keep adapters simple. Provide CSV loader + pluggable stubs for CEX/Deribit so user can wire in credentials later. Inputs are end-of-hour/day snapshots only.
+
+Features (signature-lite):
+
+Use iisignature if available; otherwise implement a tiny truncated log-signature via iterative integrals for order 2/3 (time-augmented path).
+
+Standardize features; keep dimension small.
+
+ORCSMC:
+
+Rolling window L (configurable, e.g., 96 steps). Two particle systems: learning (twist) and estimation. Bounded per-step cost. Output daily P(RISK-ON).
+
+Bias head:
+
+Minimal sklearn-style linear/logistic with BEMA update wrapper. Training utilities prefer larger LR regimes. Optional switch to JAL (AMSE passive + active CE/FL) if labels noisy.
+
+Stopping:
+
+Daily STOP/HOLD with a tiny MLP; provide lower/upper bound reporting (dual method) in logs. Max holding 7 days enforced.
+
+Execution sizing:
+
+x* ∝ Bias. Adjustment rate 
+𝜅
+κ chosen using multiscale-SV rule of thumb (fast vs slow vol indicators). Assume small linear impact, calibrate impact_eps from slippage file; halve step if fast vol spikes.
+
+Risk rails: strict and centralized in risk.py.
+
+Validation:
+
+Walk-forward (365/30 rolling). Only decision-time features. Apply fees, slippage, funding. Compute accept bars; fail fast if bars not met.
+
+Scheduler:
+
+APScheduler job at 00:00 UTC to run the daily pipeline; also expose /run-now to trigger manually from the UI.
+
+Persistence:
+
+SQLite tables: runs, positions, P&L, gate probs, metrics. Save models to /backend/models/*.pt or .joblib.
+
+GPU split (user’s RTX 3080):
+
+Provide /backend/train_local/ scripts:
+
+train_bias_head_gpu.py (torch + BEMA + high-LR sweeps)
+
+train_stopping_gpu.py (deep optimal stopping)
+
+Each script: saves weights + a manifest JSON. Backend can import these weights via an API call or drag-drop.
+
+Frontend (one-screen dashboard)
+
+Tech: React + Tailwind (no routing). Fetch from FastAPI.
+
+Layout (grid, zero clutter):
+
+Header strip: Symbol selector (BTC, ETH), UTC clock tag, Gate badge (RISK-ON prob as thin radial gauge).
+
+Left column (State):
+
+Card: Gate (P(RISK-ON) big number; thin sparkline last 14 days; threshold line @0.60).
+
+Card: Bias (−1..+1 gauge; LONG/SHORT/FLAT pill).
+
+Card: Sizing (target 
+𝑥
+∗
+x
+∗
+, current exposure, planned step & 
+𝜅
+κ; funding/vol guards as tiny badges).
+
+Right column (Diagnostics):
+
+Card: Features (top 8 feature attributions for Bias head; feature values table, sortable).
+
+Card: Stops (STOP/HOLD decision with confidence interval bounds).
+
+Card: Validation ticks (Hit-rate, Sharpe, MDD, Gate off-rate; green/red ticks vs bars).
+
+Footer action bar: buttons: Run Now, Backtest 30d, Import Weights, Export Logs.
+
+Ultra-dark monochrome theme (tokens in theme.css):
+
+Backgrounds: --bg-0:#0A0A0B; --bg-1:#0E0E10; --bg-2:#151517; --bg-3:#1B1B1E
+
+Strokes: --ink-1:#2A2A2F; --ink-2:#3A3A42; --ink-3:#4A4A55
+
+Text: --txt-1:#D7D7DC; --txt-2:#A5A5AC; --txt-3:#7A7A82
+
+Accents (mono only): --acc-1:#5A5A66; --acc-2:#70707B
+
+Typography: Use thin, modern font: Inter var / IBM Plex Sans / SF Pro with font-weight:300 default; larger numeric display uses font-100/200.
+
+Charts: minimal, no gridlines, tight sparklines, no bright colors—just grayscale opacities.
+
+Exact dependencies (pin sensibly)
+
+requirements.txt:
+
+fastapi==0.115.*
+uvicorn==0.30.*
+pydantic==2.*
+pandas==2.*        # or polars if you prefer; choose one and stick to it
+numpy==1.26.*
+scikit-learn==1.5.*
+torch==2.*         # GPU training scripts will use CUDA locally
+iisignature==0.24  # if unavailable on Replit, fallback to custom log-signature
+apscheduler==3.10.*
+sqlite-utils==3.*
+
+
+/frontend/package.json minimal with React, Vite (or CRA), Tailwind, tiny chart lib (e.g., Recharts) using grayscale only.
+
+Key algorithms — implementation notes
+
+Signature-lite: time-augment path; compute order-2/3 coordinates; z-score; keep < 32 dims.
+
+ORCSMC: rolling window L; dual filters (learning ψ and estimation); bounded per-step compute. Emit p_risk_on.
+
+Bias head: tiny linear/logit; training wrapper applies BEMA update each step; run LR grid favoring higher LRs; optional JAL loss swap for noise robustness.
+
+Deep Optimal Stopping: decompose STOP/HOLD as recursive 0/1 nets; output decision + lower/upper bound.
+
+Sizing w/ impact & multiscale SV: compute 
+𝑥
+∗
+x
+∗
+; step size via 
+𝜅
+(
+vol state
+)
+κ(vol state); small-impact approximation; halve step on vol spikes or high funding.
+
+Validation: strict acceptance; log slice-by-slice metrics; UI shows pass/fail ticks.
+
+API surface (FastAPI)
+
+GET /status (health, versions)
+
+POST /run-now?symbol=BTC → runs the daily pipeline once and returns decisions
+
+POST /import-weights (multipart: bias_head, stopping)
+
+POST /backtest?days=30&symbol=BTC → returns metrics series + pass/fail
+
+GET /telemetry?symbol=BTC → gate prob, bias, x*, κ, guards, latest decisions, recent PnL
+
+Tests (keep small but real)
+
+Feature shapes, ORCSMC posterior sanity (toy HMM), bias head monotonicity on synthetic signals, stopping policy returns vs trivial baselines, execution step sanity, validation bars calc.
+
+Non-negotiables
+
+One screen only. No auth, no notifications, no extra pages.
+
+Ultra-dark, monochrome, thin fonts, zero visual noise.
+
+Deterministic seeds. Clear logs. Clean code comments that cite the module’s research hook.
+
+Hand-off steps (RTX 3080 training)
+
+Provide train_bias_head_gpu.py and train_stopping_gpu.py that load CSVs, do BEMA/high-LR sweeps (and optional JAL), save *.pt weights + a manifest.json.
+
+Backend exposes /import-weights to load those. Dashboard updates attribution + bounds immediately.
+
+Acceptance checklist (auto-printed after backtest)
+
+Hit-rate, Sharpe, MaxDD, Gate off-rate vs bars; pass/fail.
+
+If fail: print which bar failed and the top 3 contributing diagnostics (feature leakage check, over-confidence gate, impact mis-calibration).
+
+Now build it. Output:
+
+The full project tree with code for each file above.
+
+A short README with “Run in Replit” + “Run GPU training locally, then import”.
+
+A single screenshot mock (ASCII ok) of the one-screen layout to show spacing/weights.
+
+Keep everything crisp and minimalist.
+
+Research basis (what the code comments should reflect)
+
+Signature-based volatility modeling remains accurate under Heston and also under rough Bergomi → model-agnostic robustness of path-signature features. 
+ 
+
+ORCSMC: dual particle systems (learn twist + filter), rolling window; bounded per-step cost; improved accuracy/robustness vs standard PFs. 
+ 
+ 
+
+Deep Optimal Stopping: decompose stopping into recursive 0/1 nets; provide lower/upper bounds; scales to high-dim problems. 
+ 
+
+Impact + Multiscale SV: small-impact + fast/slow SV asymptotics yield tractable corrections and better PnL; extend Gârleanu–Pedersen to realistic frictions. 
+ 
+
+BEMA: bias-corrected EMA that removes lag but keeps variance reduction; improves convergence/performance. 
+ 
+
+Large LRs: consistently improve robustness to spurious correlations and compressibility, with better feature utilization and class separation. 
+ 
+
+JAL/AMSE: extend asymmetric losses to passive case; noise-tolerant framework that pairs AMSE (passive) with active loss. 

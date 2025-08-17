@@ -1,0 +1,38 @@
+Rebuild my current dashboard UI using the visual language of the FIRST reference image.
+
+GOAL
+• Recreate the look/feel/layout patterns of the first image (rounded cards, soft shadows, spacious grid, pill controls, avatar chip, clean typography). 
+• Keep ALL of the textual labels, numbers, and sections from my existing black UI EXACT and UNCHANGED (copy them verbatim). Do not rename, remove, or invent metrics. If something is unreadable, use a clear placeholder and leave a TODO.
+• The result should look like my current app refactored into the first image’s style.
+
+REQUIREMENTS
+• Monochrome palette only (you pick the single hue: green, blue, violet, etc.). Generate all UI color tokens from that one hue.
+• FLAT theme: no gradients or textures anywhere. Subtle neumorphism (very soft outer/inner shadow) is OK for depth but keep it minimal.
+• Solid background (no imagery). High contrast and accessible (WCAG AA).
+• Responsive from 1280px → 1920px; graceful at smaller widths.
+• Keyboard navigable with visible focus states.
+
+STRUCTURE (map my data into this layout)
+• Left rail for primary actions (e.g., “Run Now”, “Backtest”, “Import”, “Export”) — styled as flat pills or minimal buttons.
+• Top header area for context chips (e.g., asset toggles like BTC/ETH, time, profile/avatar).
+• Main content grid of rounded “cards” that match the first image’s spacing/radii. Each card displays one of my existing sections and its values (e.g., Gate/Score, Bias, Optimal Execution, Signature Features, Deep Optimal Stopping, Learning & Optimization, Loss Training). Preserve every label/value pair as-is.
+• Optional bottom status strip for playback/controls-style summary (styled like the first image’s player bar but with my app’s controls/status).
+
+IMPLEMENTATION NOTES
+• Use a modern stack (React + Tailwind is great, but pure HTML/CSS/JS is fine). Keep files small and readable.
+• Define CSS variables for the monochrome system:
+  --ui-bg, --ui-surface, --ui-surface-2, --ui-text, --ui-text-muted, --ui-accent, --ui-border, --ui-shadow.
+  Provide a single place to swap the hue.
+• Card recipe: flat surface, large radius, 1px border at low opacity, tiny ambient shadow (no gradient fills), generous padding.
+• Typography: one clean sans serif; distinct sizes for headers, section titles, value emphasis, and meta labels.
+• Micro-interactions only (hover/press states, focus rings). No heavy animations.
+• Do not change any copy or numbers. Display my current data exactly.
+
+DELIVERABLES
+1) Working UI that mirrors the first image’s design language but renders my existing data and sections.
+2) A simple theme file (tokens/variables) to change the single hue quickly.
+3) Brief README at the top of the main file explaining where to plug in real data.
+
+Stretch (nice to have, not required): small utility to switch monochrome hue at runtime by updating CSS variables.
+
+Important: Honor “monochrome + flat” above all else, keep my data intact, and bias toward the first image’s spacing, radii, and pill shapes.
